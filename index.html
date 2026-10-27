@@ -248,15 +248,19 @@ return pg.render({canvasContext:cx,viewport:v}).promise.then(function(){return n
 return p.then(function(){return imgs.concat(out)},function(){return Promise.reject({code:"pdf_failed"})})}
 function aiErr(e){var c=e&&e.code;return c=="not_granted"?"لازم توافق على استخدام Claude من الصفحة عشان القراءة تشتغل.":c=="rate_limited"?"الاستخدام وصل للحد دلوقتي، جرب بعد شوية.":c=="image_rejected"?"الصورة مش مقبولة. استخدم PNG أو JPG أصغر من 20 ميجا.":c=="invalid_json"?"مقدرتش أقرا الأرقام من الصورة. جرب سكرين أوضح ومقصوص على جدول الطباعة.":c=="refused"?"الصورة دي مقدرتش أقراها. جرب صورة تانية.":c=="pdf_failed"?"مقدرتش أفتح الـ PDF هنا. املا الجدول بإيدك.":c=="no_pages"?"اكتب رقم صفحة الطباعة في الـ PDF الأول.":c=="session_expired"?"سجل دخول تاني على claude.ai وجرب.":c=="images_unavailable"||c=="sampling_disabled"||c=="capability_disabled"?"القراءة شغالة مع ملفات PDF بس.":"حصلت مشكلة أثناء القراءة. جرب تاني."}
 function parseSheet(items,res,sel){
-var it=[];items.forEach(function(x){var s=String(x.str||"").trim();if(s&&x.transform)it.push({s:s,x:x.transform[4],y:x.transform[5],c:x.transform[4]+(x.width||0)/2})});
+var it=[];items.forEach(function(x){var s=String(x.str||"").replace(/[\u2010-\u2015\u2212]/g,"-").replace(/\u00a0/g," ").trim();if(s&&x.transform)it.push({s:s,x:x.transform[4],y:x.transform[5],c:x.transform[4]+(x.width||0)/2})});
+if(!res.sample)res.sample=it.slice(0,30).map(function(o){return o.s}).join(" | ");
 it.forEach(function(o){var m=o.s.match(/^\d{5,}-(.+)-[A-Z0-9]{5,8}$/);if(m&&!res.style)res.style=m[1]});
-var hs=it.filter(function(o){return /^\d{1,2}y-?(\d{1,2}y)?$/i.test(o.s)}).sort(function(a,b){return a.c-b.c}),cl=[];
+var YR="(?:y|yr|yrs|year|years)",H1=new RegExp("^-?\\d{1,2}\\s*"+YR+"\\s*-?\\s*(?:\\d{1,2}\\s*"+YR+")?$","i"),H2=new RegExp("^\\d{1,2}\\s*-\\s*\\d{1,2}\\s*"+YR+"$","i"),H3=/^\d{1,2}\s*-\s*\d{1,2}$/;
+var hs=it.filter(function(o){return H1.test(o.s)||H2.test(o.s)||H3.test(o.s)}).sort(function(a,b){return a.c-b.c}),cl=[];
 hs.forEach(function(o){var l=cl[cl.length-1];if(l&&o.c-l.c<14)l.m.push(o);else cl.push({c:o.c,m:[o]})});
 cl.forEach(function(g){g.m.sort(function(a,b){return b.y-a.y});g.label=g.m.map(function(o){return o.s}).join("").replace(/\s/g,"")});
 if(cl.length>=2)res.cl=cl;cl=res.cl;if(!cl||cl.length<2)return;
 var ds=[];for(var i=1;i<cl.length;i++)ds.push(cl[i].c-cl[i-1].c);ds.sort(function(a,b){return a-b});var sp=ds[Math.floor(ds.length/2)],tol=sp*0.45,minC=cl[0].c-sp*0.5;
-var cd=it.filter(function(o){return /^[A-Z]\d{2,3}$/.test(o.s)});if(!cd.length)return;
-var mx=Math.min.apply(null,cd.map(function(o){return o.x}));cd=cd.filter(function(o){return o.x-mx<25}).sort(function(a,b){return b.y-a.y});
+var cd=it.filter(function(o){return /^[A-Z]\d{2,3}$/.test(o.s)});
+if(cd.length){var mx=Math.min.apply(null,cd.map(function(o){return o.x}));cd=cd.filter(function(o){return o.x-mx<25}).sort(function(a,b){return b.y-a.y})}
+else{var ls=[];it.filter(function(o){return o.c<minC&&!/^-?\d+(\.\d+)?$/.test(o.s)&&/[A-Za-z]/.test(o.s)}).sort(function(a,b){return b.y-a.y}).forEach(function(o){var l=ls[ls.length-1];if(l&&Math.abs(l.y-o.y)<=4)return;ls.push({s:"",x:0,y:o.y})});cd=ls;res.noCodes=true}
+if(!cd.length)return;
 var rows=cd.map(function(c,j){var top=c.y+6,bot=j+1<cd.length?cd[j+1].y+6:-1e9,nm=[],vals={};
 it.filter(function(o){return o.y<=top&&o.y>bot&&o!==c}).forEach(function(o){
 if(/^-?\d+(\.\d+)?$/.test(o.s)){var bi=-1,bd=1e9;cl.forEach(function(g,k){var d=Math.abs(o.c-g.c);if(d<bd){bd=d;bi=k}});if(bd<=tol)vals[bi]=parseFloat(o.s)}
@@ -281,8 +285,12 @@ var pages=parsePages($("pg").value).filter(function(n){return n>=1&&n<=PDFDOC.nu
 if(!pages.length){anote(aiErr({code:"no_pages"}));return}
 $("ai").disabled=true;anote("بقرا الـ PDF في المتصفح...");
 var res={style:null,sizes:{},order:[],cl:null},txt=false,p=Promise.resolve();
-pages.forEach(function(n){p=p.then(function(){return PDFDOC.getPage(n).then(function(pg){return pg.getTextContent()}).then(function(tc){if(tc.items.length)txt=true;parseSheet(tc.items,res,sel)})})});
-p.then(function(){if(!txt||!res.order.length){anote("مقدرتش أقرا جدول من الـ PDF ده (يمكن مصوّر أو شكله مختلف). املا الجدول بإيدك،");return}
+var PI=[];
+pages.forEach(function(n){p=p.then(function(){return PDFDOC.getPage(n).then(function(pg){return pg.getTextContent()}).then(function(tc){if(tc.items.length)txt=true;PI.push(tc.items);parseSheet(tc.items,res,sel)})})});
+p.then(function(){if(!res.order.length&&res.cl&&res.cl.length>=2)PI.forEach(function(its){parseSheet(its,res,sel)})})
+.then(function(){if(!txt){anote("الـ PDF ده مصوّر (مفيهوش نص يتقرا). املا الجدول بإيدك.");return}
+if(!res.order.length){var smp=res.sample?" | أول نصوص لقيتها في الصفحة: "+res.sample.slice(0,220):"";console.log("PDF parse failed. sample:",res.sample,"headers:",res.cl&&res.cl.length);
+anote(!res.cl||res.cl.length<2?"مالقيتش عناوين المقاسات (زي 5y-6y) في الصفحة اللي اخترتها. جرب صفحة تانية فيها جدول المقاسات"+smp:"لقيت المقاسات بس مالقيتش صفوف الطباعة في الصفحة دي. جرب صفحة تانية"+smp);return}
 applyAI({style:res.style,print:null,sizes:res.order.map(function(l){return res.sizes[l]})},sel)})
 .catch(function(){anote("حصلت مشكلة وأنا بقرا الـ PDF. جرب صفحة تانية أو املا الجدول بإيدك.")}).then(function(){$("ai").disabled=false})}
 function applyAI(d,K){
