@@ -106,6 +106,7 @@ hf:{nv:{},dims:0,chk:{top:1,cf:1},pw:8.64,ph:3.09,per:0,notes:N,rows:mk(HL,{pw:8
 pt:{nv:{side:"1.5",pocket:"1.5"},dims:0,chk:{side:1,pocket:1},pw:7,ph:4.6,per:1,notes:N,rows:mk(["XS","S","M","L","XL","2XL","3XL"],{pw:[7,7,7,7,8.05,8.05,8.05],ph:[4.6,4.6,4.6,4.6,5.29,5.29,5.29],gw:[28,28.5,29.5,30.5,32,33,34.5],gl:[94,95,97,99,101,103,105],hw:[15,15.5,16,16.5,17,17.5,18],v:{side:1.5,pocket:1.5}})}};
 M.hf.rows.forEach(function(r,i){r.sh=HS[HM[i]]});
 var GEO={t:{px:4.2,per:3},p:{px:3.9,row:[[0,1,2,3],[4,5,6]]},h:{px:3.6,per:4}};
+function chunk(V,n){var o=[];for(var i=0;i<V.length;i+=n)o.push(V.slice(i,i+n));return o}
 function pack(V,per){var rows=[],n=V.length,rem=n%per,i=0;if(rem){rows.push(V.slice(0,rem));i=rem}for(;i<n;i+=per)rows.push(V.slice(i,i+per));return rows}
 function tsOf(){var st=M[cur];return st.ts||((cur=="tf"||cur=="hf")?"fn":cur=="tb"?"bn":"wb")}
 function nm(k){return k=="top"?{fn:"Front Neck",bn:"Back Neck",wb:"Waist"}[tsOf()]:{hem:"Hem",cf:"CF",cb:"CB",side:"Side Seam",pocket:"Below Pocket",gw:"Width",gl:"Length",hw:"Hem W"}[k]}
@@ -146,7 +147,7 @@ fr.onload=function(){var im=new Image();im.onload=function(){pimg=im;if($("lock"
 st.ph=Math.round(st.pw*q*100)/100;st.rows.forEach(function(r){r.ph=Math.round(r.pw*q*100)/100});loadUI()}render()};im.src=fr.result};fr.readAsDataURL(f)});
 function layout(){var st=M[cur],g=GEO[cur=="pt"?"p":cur=="hf"?"h":"t"],px=g.px,CX=[],TOP=[],y=22;
 var V=[];st.rows.forEach(function(q,i){if(vis(q))V.push(i)});
-var RR=cur=="pt"?g.row.map(function(r){return r.filter(function(i){return vis(st.rows[i])})}).filter(function(r){return r.length}):pack(V,g.per),aw=0;
+var RR=cur=="pt"?chunk(V,4):pack(V,g.per),aw=0;
 RR.forEach(function(r){var tot=30*(r.length-1);r.forEach(function(i){tot+=st.rows[i].gw*px});aw=Math.max(aw,tot+50)});
 RR.forEach(function(r){
 var mh=0,tot=30*(r.length-1);r.forEach(function(i){mh=Math.max(mh,st.rows[i].gl*px);tot+=st.rows[i].gw*px});var x=(aw-tot)/2;
@@ -251,10 +252,14 @@ function parseSheet(items,res,sel){
 var it=[];items.forEach(function(x){var s=String(x.str||"").replace(/[\u2010-\u2015\u2212]/g,"-").replace(/\u00a0/g," ").trim();if(s&&x.transform)it.push({s:s,x:x.transform[4],y:x.transform[5],c:x.transform[4]+(x.width||0)/2})});
 if(!res.sample)res.sample=it.slice(0,30).map(function(o){return o.s}).join(" | ");
 it.forEach(function(o){var m=o.s.match(/^\d{5,}-(.+)-[A-Z0-9]{5,8}$/);if(m&&!res.style)res.style=m[1]});
-var YR="(?:y|yr|yrs|year|years)",H1=new RegExp("^-?\\d{1,2}\\s*"+YR+"\\s*-?\\s*(?:\\d{1,2}\\s*"+YR+")?$","i"),H2=new RegExp("^\\d{1,2}\\s*-\\s*\\d{1,2}\\s*"+YR+"$","i"),H3=/^\d{1,2}\s*-\s*\d{1,2}$/;
-var hs=it.filter(function(o){return H1.test(o.s)||H2.test(o.s)||H3.test(o.s)}).sort(function(a,b){return a.c-b.c}),cl=[];
+var YR="(?:y|yr|yrs|yas|year|years)",H1=new RegExp("^[-/]?\\d{1,2}\\s*"+YR+"\\s*[-/]?\\s*(?:\\d{1,2}\\s*"+YR+")?$","i"),H2=new RegExp("^\\d{1,2}\\s*[-/]\\s*\\d{1,2}\\s*"+YR+"$","i"),H3=/^\d{1,2}\s*[-\/]\s*\d{1,2}$/,H5=new RegExp("^"+YR+"$","i");
+var hs=it.filter(function(o){return H1.test(o.s)||H2.test(o.s)||H3.test(o.s)||H5.test(o.s)});
+if(hs.filter(function(o){return /\d/.test(o.s)}).length<2){var AL=/^(?:X{1,6}[SL]|[SML]|[2-6]XL)$/i,ac=it.filter(function(o){return AL.test(o.s)}),gl=[];
+ac.sort(function(a,b){return b.y-a.y}).forEach(function(o){var g=gl.filter(function(q){return Math.abs(q.y-o.y)<=3})[0];if(g)g.m.push(o);else gl.push({y:o.y,m:[o]})});
+gl.sort(function(a,b){return b.m.length-a.m.length});if(gl.length&&gl[0].m.length>=3)hs=gl[0].m}
+hs=hs.sort(function(a,b){return a.c-b.c}),cl=[];
 hs.forEach(function(o){var l=cl[cl.length-1];if(l&&o.c-l.c<14)l.m.push(o);else cl.push({c:o.c,m:[o]})});
-cl.forEach(function(g){g.m.sort(function(a,b){return b.y-a.y});g.label=g.m.map(function(o){return o.s}).join("").replace(/\s/g,"")});
+cl.forEach(function(g){g.m.sort(function(a,b){return b.y-a.y});g.label=g.m.map(function(o){return o.s}).join("").replace(/\s/g,"").replace(/(\d)(YAS)$/i,"$1 $2")});
 if(cl.length>=2)res.cl=cl;cl=res.cl;if(!cl||cl.length<2)return;
 var ds=[];for(var i=1;i<cl.length;i++)ds.push(cl[i].c-cl[i-1].c);ds.sort(function(a,b){return a-b});var sp=ds[Math.floor(ds.length/2)],tol=sp*0.45,minC=cl[0].c-sp*0.5;
 var cd=it.filter(function(o){return /^[A-Z]\d{2,3}$/.test(o.s)});
@@ -293,6 +298,10 @@ if(!res.order.length){var smp=res.sample?" | أول نصوص لقيتها في �
 anote(!res.cl||res.cl.length<2?"مالقيتش عناوين المقاسات (زي 5y-6y) في الصفحة اللي اخترتها. جرب صفحة تانية فيها جدول المقاسات"+smp:"لقيت المقاسات بس مالقيتش صفوف الطباعة في الصفحة دي. جرب صفحة تانية"+smp);return}
 applyAI({style:res.style,print:null,sizes:res.order.map(function(l){return res.sizes[l]})},sel)})
 .catch(function(){anote("حصلت مشكلة وأنا بقرا الـ PDF. جرب صفحة تانية أو املا الجدول بإيدك.")}).then(function(){$("ai").disabled=false})}
+function adopt(st,rows){var n=rows.length,R=st.rows;if(!n)return;
+while(R.length<n){var l=R[R.length-1],pv=R[R.length-2]||l,c=JSON.parse(JSON.stringify(l));
+["gw","gl","hw"].forEach(function(k){c[k]=Math.round((l[k]+(l[k]-pv[k]))*100)/100});R.push(c)}
+R.forEach(function(r,i){r.l=i<n?String(rows[i]&&rows[i].label||""):""})}
 function applyAI(d,K){
 if(!d||typeof d!="object"){anote("الرد مكنش بالشكل المتوقع. جرب تاني.");return}
 var st=M[cur],got=0,miss=[],rows=Array.isArray(d.sizes)?d.sizes:[],diff={};
@@ -300,15 +309,14 @@ if(K.indexOf("top")>=0&&TOPSRC)st.ts=TOPSRC;
 if(typeof d.style=="string"&&d.style.trim())$("style").value=d.style.trim();
 var pw=d.print?nz(d.print.w):null,ph=d.print?nz(d.print.h):null;
 if(pw>0&&ph>0){st.pw=pw;st.ph=ph;st.rows.forEach(function(r){r.pw=pw;r.ph=ph})}
-rows.forEach(function(x){var r=null;st.rows.forEach(function(q){if(nl(q.l)==nl(x&&x.label))r=q});
-if(!r){miss.push(String(x&&x.label))
-;return}
+adopt(st,rows);
+rows.forEach(function(x,xi){var r=st.rows[xi];
 got++;K.forEach(function(k){var v=nz(x[k]);if(v!==null){r[k]=v;st.chk[k]=1}});
 var w=nz(x.w),h=nz(x.h);if(w>0&&h>0){r.pw=w;r.ph=h;diff[w+"|"+h]=1}});
 if(Object.keys(diff).length>1)st.per=1;
 else if(Object.keys(diff).length==1&&!(pw>0&&ph>0)){var q=Object.keys(diff)[0].split("|");st.pw=+q[0];st.ph=+q[1]}
 loadUI();render();
-anote(got?("اتملا "+got+" مقاس. راجع الأرقام في الجدول قبل التحميل."+(miss.length?" المقاسات دي مش موجودة في الجدول: "+miss.join(", ")+". عدل أسماء المقاسات في الجدول لو محتاج.":"")):"مقدرتش ألاقي مقاسات من الصورة تطابق الجدول."+(miss.length?" المقاسات اللي قريتها: "+miss.join(", ")+".":""))}
+anote(got?("اتملا "+got+" مقاس والمقاسات اتاخدت من الـ PDF. راجع الأرقام في الجدول قبل التحميل. ولو أبعاد القطعة مختلفة عن الافتراضي فعّل \"أبعاد القطعة الحقيقية\" وظبطها."+(miss.length?" المقاسات دي مش موجودة في الجدول: "+miss.join(", ")+". عدل أسماء المقاسات في الجدول لو محتاج.":"")):"مقدرتش ألاقي مقاسات من الصورة تطابق الجدول."+(miss.length?" المقاسات اللي قريتها: "+miss.join(", ")+".":""))}
 $("ai").onclick=function(){
 var fs=$("shot").files;if(!fs||!fs.length){anote("اختار ملف PDF الأول.");return}
 var ORD=["top","pocket","cf","cb","side","hem"],topSrc=aiTop(),sel=ORD.filter(function(k){return k=="top"?!!topSrc:$("ai-"+k).checked});
