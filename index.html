@@ -67,10 +67,14 @@ canvas{width:100%;min-width:640px;border:1px solid var(--bd);border-radius:8px;d
 <label>صورة الطباعة (PNG / JPG)</label><input id="img" type="file" accept="image/*">
 <label>عرض الطباعة (CM) - الافتراضي</label><input id="pw" type="number" step="0.01">
 <label>ارتفاع الطباعة (CM) - الافتراضي</label><input id="ph" type="number" step="0.01">
-<label><input id="u8" type="checkbox"> زيادة 8% على المقاسات اللي أختارها</label>
-<div id="ul8" class="ck upl" hidden></div>
-<label><input id="u15" type="checkbox"> زيادة 15% على المقاسات اللي أختارها</label>
-<div id="ul15" class="ck upl" hidden></div>
+<label><input id="u8" type="checkbox"> زيادة 8% على كل المقاسات</label>
+<p class="hint">أو علّم على مقاسات معينة بس تتزاد 8%:</p>
+<div id="ul8" class="ck upl"></div>
+<p class="hint" id="uo8" role="status"></p>
+<label><input id="u15" type="checkbox"> زيادة 15% على كل المقاسات</label>
+<p class="hint">أو علّم على مقاسات معينة بس تتزاد 15%:</p>
+<div id="ul15" class="ck upl"></div>
+<p class="hint" id="uo15" role="status"></p>
 <label><input id="lock" type="checkbox" checked> قفل نسبة الصورة (الارتفاع يتظبط لوحده)</label>
 <label><input id="per" type="checkbox"> مقاس طباعة مختلف لكل مقاس (W / H في الجدول)</label>
 <label><input id="dims" type="checkbox"> أبعاد القطعة الحقيقية بالسم (Width / Length في الجدول)</label>
@@ -153,13 +157,13 @@ fr.onload=function(){var im=new Image();im.onload=function(){pimg=im;if($("lock"
 st.ph=Math.round(st.pw*q*100)/100;st.rows.forEach(function(r){r.ph=Math.round(r.pw*q*100)/100});loadUI()}render()};im.src=fr.result};fr.readAsDataURL(f)});
 var UF={8:1.08,15:1.15};
 function UPS(st){if(!st.up){st.up={8:{},15:{}};st.on={8:0,15:0}}return st}
-function upf(st,i){UPS(st);for(var p in UF)if(st.on[p]&&st.up[p][i])return UF[p];return 1}
+function upf(st,i){UPS(st);if(st.up[15][i])return UF[15];if(st.up[8][i])return UF[8];if(st.on[15])return UF[15];if(st.on[8])return UF[8];return 1}
 function eff(st,r,i){var f=upf(st,i),w=st.per?r.pw:st.pw,h=st.per?r.ph:st.ph;return[Math.round(w*f*100)/100,Math.round(h*f*100)/100]}
 function upAny(st){UPS(st);var a=0;st.rows.forEach(function(r,i){if(vis(r)&&upf(st,i)!=1)a=1});return a}
 function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;")}
-function buildUp(){var st=UPS(M[cur]);[8,15].forEach(function(p){$("u"+p).checked=!!st.on[p];var b=$("ul"+p);b.hidden=!st.on[p];var h="";
+function buildUp(){var st=UPS(M[cur]);[8,15].forEach(function(p){$("u"+p).checked=!!st.on[p];var b=$("ul"+p);var h="";
 st.rows.forEach(function(r,i){if(vis(r))h+='<label><input type="checkbox" data-u="'+p+'" data-i="'+i+'"'+(st.up[p][i]?" checked":"")+'>'+esc(r.l)+'</label>'});b.innerHTML=h})}
-[8,15].forEach(function(p){$("u"+p).addEventListener("change",function(){var st=UPS(M[cur]);st.on[p]=this.checked?1:0;$("ul"+p).hidden=!this.checked;render()});
+[8,15].forEach(function(p){$("u"+p).addEventListener("change",function(){var st=UPS(M[cur]);st.on[p]=this.checked?1:0;if(this.checked){var o=p==8?15:8;st.on[o]=0;$("u"+o).checked=false}render()});
 $("ul"+p).addEventListener("change",function(e){var d=e.target.dataset;if(!d.u)return;var st=UPS(M[cur]);
 if(e.target.checked){st.up[p][d.i]=1;var o=p==8?15:8;delete st.up[o][d.i];var ob=$("ul"+o).querySelector('input[data-i="'+d.i+'"]');if(ob)ob.checked=false}else delete st.up[p][d.i];render()})});
 function layout(){var st=M[cur],g=GEO[cur=="pt"?"p":cur=="hf"?"h":"t"],px=g.px,CX=[],TOP=[],y=22;
@@ -208,16 +212,20 @@ c.fillStyle="#000";c.font="bold 19px Arial";c.textAlign=al;c.fillText(r.l,lx,ly2
 c.strokeStyle="#333";c.lineWidth=1.2;c.strokeRect(BX,50,400,bh);
 c.fillStyle="#000";c.font="18px Arial";c.textAlign="left";
 L.forEach(function(l,k){c.fillText(l,BX+20,80+k*23,370)})}
+var WM=null;
+function wrapL(a){if(!WM){WM=document.createElement("canvas").getContext("2d");WM.font="18px Arial"}
+var o=[],c="";a.forEach(function(l){var t=c?c+"  /  "+l:l;if(c&&WM.measureText(t+"  /").width>366){o.push(c+"  /");c=l}else c=t});if(c)o.push(c);return o}
 function notesLines(){var st=M[cur],ck=st.chk,vrows=st.rows.filter(vis);var L=["STYLE : "+$("style").value,""];
 ["top","pocket","cf","cb","side","hem"].forEach(function(k){if(!ck[k])return;
 var nv=parseFloat(st.nv[k]),sv=nv>0?" "+fmt(nv)+" CM":"";
 L.push((k=="pocket"?"PRINT PLACEMENT-BELOW POCKET":"PRINT PLACEMENT-FROM "+nn(k))+sv)});
 L.push("");st.notes.split("\n").forEach(function(l){L.push(l)});L.push("","PRINT SIZE","");
 if(st.per||upAny(st)){var gs={},od=[];st.rows.forEach(function(r,i){if(!vis(r))return;var e=eff(st,r,i),k=fmt(e[0])+"|"+fmt(e[1]);if(!gs[k]){gs[k]=[];od.push(k)}gs[k].push(r.l)});
-od.forEach(function(k){var p=k.split("|");L.push(gs[k].join(" / "),"WIDTH "+p[0]+" CM","HEIGHT "+p[1]+" CM","")})}
+od.forEach(function(k){var p=k.split("|");wrapL(gs[k]).forEach(function(x){L.push(x)});L.push("WIDTH "+p[0]+" CM","HEIGHT "+p[1]+" CM","")})}
 else L.push("WIDTH "+fmt(st.pw)+" CM","HEIGHT "+fmt(st.ph)+" CM");
 return L}
-function render(){draw($("cv"),2)}
+function upOut(){var st=M[cur],r2=function(n){return fmt(Math.round(n*100)/100)};[8,15].forEach(function(p){var e=$("uo"+p);if(e)e.textContent="الناتج بعد زيادة "+p+"%: العرض "+r2(st.pw*UF[p])+" CM × الارتفاع "+r2(st.ph*UF[p])+" CM"})}
+function render(){draw($("cv"),2);upOut()}
 function note(t){var n=$("dlnote");if(n)n.textContent=t||""}
 function dlFallback(b,fn){var u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();
 setTimeout(function(){URL.revokeObjectURL(u)},1500);note("المتصفح ده مش بيدعم اختيار مكان الحفظ، فاتحمّلت في فولدر التحميلات. تقدر تفعّل \"اسأل أين تحفظ كل ملف\" من إعدادات التحميل في المتصفح.")}
