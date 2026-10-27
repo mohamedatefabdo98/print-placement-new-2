@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مولّد صورة Print Placement</title>
+<style>
+:root{--bg:#f4f5f3;--card:#ffffff;--tx:#1a1d1c;--mut:#5f6664;--bd:#d6dad7;--ac:#0f766e;--acx:#ffffff;--ring:#0f766e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151918;--card:#202524;--tx:#ecefee;--mut:#9aa4a1;--bd:#363d3b;--ac:#2dd4bf;--acx:#04201d;--ring:#2dd4bf;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#151918;--card:#202524;--tx:#ecefee;--mut:#9aa4a1;--bd:#363d3b;--ac:#2dd4bf;--acx:#04201d;--ring:#2dd4bf;color-scheme:dark}
+*{box-sizing:border-box}
+body{direction:rtl;margin:0;background:var(--bg);color:var(--tx);font-family:Tahoma,Arial,sans-serif;font-size:14px;padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-size:20px;margin:0 0 14px;text-wrap:balance}
+.grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:880px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;min-width:0}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
+input,textarea,select{width:100%;padding:8px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit}
+input[type=text],input[type=number],textarea{direction:ltr}
+textarea{min-height:70px}
+.ck{display:flex;flex-wrap:wrap;gap:8px 14px;direction:ltr;font-size:13px}
+.ck label{display:flex;gap:5px;align-items:center;margin:0;color:var(--tx)}
+.ck input,label input[type=checkbox]{width:auto}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;margin-top:6px}
+td,th{padding:3px;font-size:11px;color:var(--mut);font-weight:normal;white-space:nowrap}
+td input{padding:5px;text-align:center;min-width:52px;font-size:12px;font-variant-numeric:tabular-nums}
+.hint{font-size:12px;color:var(--mut);margin:6px 0 0;line-height:1.6}
+button{margin-top:14px;width:100%;padding:12px;border:0;border-radius:10px;background:var(--ac);color:var(--acx);font:inherit;font-size:15px;cursor:pointer}
+button:hover{filter:brightness(1.07)}
+tr.off td+td input{opacity:.35}
+button:disabled{opacity:.55;cursor:default;filter:none}
+.aibox{padding-bottom:12px;margin-bottom:6px;border-bottom:1px dashed var(--bd)}
+.aibox label{margin-top:0}
+#aick,#ckbox{flex-direction:column;gap:6px;font-size:12px}
+button.alt{background:transparent;color:var(--ac);border:1px solid var(--ac)}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.pv{overflow-x:auto}
+canvas{width:100%;min-width:640px;border:1px solid var(--bd);border-radius:8px;display:block}
+</style>
+</head><body>
+<h1>مولّد صورة Print Placement</h1>
+<div class="grid">
+<div class="card">
+<div id="aibox" class="aibox" hidden>
+<label for="shot">املا البيانات من PDF التيكنيكال شيت</label>
+<input id="shot" type="file" accept="image/*,application/pdf,.pdf" multiple>
+<div id="pdfbox" hidden><label for="pg">صفحات الـPDF اللي فيها بيانات الطباعة (مثال: 3 أو 3-4)</label><input id="pg" type="text" placeholder="1"><p class="hint" id="pgnote" role="status"></p></div>
+<label>خد إيه بالظبط من الورقة (اختار قبل ما تضغط قراءة)</label>
+<div class="ck" id="aick">
+<label><input id="ai-top" type="checkbox"><span id="ail-top">PRINT PLACEMENT-FROM FRONT NECK</span></label>
+<label><input id="ai-bn" type="checkbox"><span id="ail-bn">PRINT PLACEMENT-FROM BACK NECK</span></label>
+<label><input id="ai-wb" type="checkbox"><span id="ail-wb">PRINT PLACEMENT-FROM WAISTBAND</span></label>
+<label><input id="ai-pocket" type="checkbox"><span id="ail-pocket">PRINT PLACEMENT-BELOW POCKET</span></label>
+<label><input id="ai-cf" type="checkbox"><span id="ail-cf">PRINT PLACEMENT-FROM CENTER FRONT</span></label>
+<label><input id="ai-cb" type="checkbox"><span id="ail-cb">PRINT PLACEMENT-FROM CENTER BACK</span></label>
+<label><input id="ai-side" type="checkbox"><span id="ail-side">PRINT PLACEMENT-FROM SIDE SEAM</span></label>
+<label><input id="ai-hem" type="checkbox"><span id="ail-hem">PRINT PLACEMENT-FROM HEM</span></label>
+</div>
+<button id="ai" type="button" class="alt">اقرا البيانات من الـPDF</button>
+<p class="hint" id="ainote" role="status">الأمامي بيتقرا من صفوف E39 والخلفي من صفوف E40 حسب الجزء المختار تحت. راجع الأرقام بعد ما تتملا. القراءة بتتم في المتصفح عندك ومفيش حاجة بتترفع لأي سيرفر، وبتشتغل مع PDF فيه نص بس.</p>
+</div>
+<label>الجزء</label>
+<select id="mode"><option value="tf">تيشيرت - FRONT (أمامي)</option><option value="tb">تيشيرت - BACK (خلفي)</option><option value="hf">هودي - FRONT-HOODY (أمامي)</option><option value="pt">بنطلون - PANTS</option></select>
+<label>اسم الاستايل</label><input id="style" type="text" value="">
+<label>مكان اسم المقاس</label>
+<select id="lp"><option value="bc">تحت - في النص</option><option value="br">تحت - يمين</option><option value="bl">تحت - شمال</option><option value="tr">فوق - يمين</option><option value="tl">فوق - شمال</option><option value="mc">في نص القطعة</option></select>
+<label>صورة الطباعة (PNG / JPG)</label><input id="img" type="file" accept="image/*">
+<label>عرض الطباعة (CM) - الافتراضي</label><input id="pw" type="number" step="0.01">
+<label>ارتفاع الطباعة (CM) - الافتراضي</label><input id="ph" type="number" step="0.01">
+<label><input id="lock" type="checkbox" checked> قفل نسبة الصورة (الارتفاع يتظبط لوحده)</label>
+<label><input id="per" type="checkbox"> مقاس طباعة مختلف لكل مقاس (W / H في الجدول)</label>
+<label><input id="dims" type="checkbox"> أبعاد القطعة الحقيقية بالسم (Width / Length في الجدول)</label>
+<label>ملاحظات إضافية (سطر لكل ملاحظة)</label>
+<textarea id="notes"></textarea>
+<label>القياسات اللي تظهر (اختار اللي محتاجه)</label>
+<div class="ck" id="ckbox">
+<label><input id="ck-top" type="checkbox">PRINT PLACEMENT-FROM FRONT NECK</label>
+<label><input id="ck-bn" type="checkbox">PRINT PLACEMENT-FROM BACK NECK</label>
+<label><input id="ck-wb" type="checkbox">PRINT PLACEMENT-FROM WAISTBAND</label>
+<label><input id="ck-pocket" type="checkbox">PRINT PLACEMENT-BELOW POCKET</label>
+<label><input id="ck-cf" type="checkbox">PRINT PLACEMENT-FROM CENTER FRONT</label>
+<label><input id="ck-cb" type="checkbox">PRINT PLACEMENT-FROM CENTER BACK</label>
+<label><input id="ck-side" type="checkbox">PRINT PLACEMENT-FROM SIDE SEAM</label>
+<label><input id="ck-hem" type="checkbox">PRINT PLACEMENT-FROM HEM</label>
+</div>
+<p class="hint">Center Front / Center Back لوحده = المسافة من أول فتحة الرقبة لتحت والطباعة في النص. ومعاه HPS أو غيره = المسافة الأفقية من النص لمنتصف الطباعة.</p>
+<label>القيمة اللي تتكتب في الملاحظات (سيبها فاضية لو مش عايزها)</label><div id="nvbox"></div>
+<div class="tw"><table id="tb"></table></div>
+<p class="hint">عشان تشيل مقاس من الصورة: امسح اسمه من الجدول بس، وباقي بياناته بتتشال لوحدها.</p>
+<button id="dl" type="button">تحميل الصورة بدقة عالية (PNG)</button>
+<p class="hint" id="dlnote" role="status"></p>
+</div>
+<div class="card pv"><canvas id="cv"></canvas></div>
+</div>
+<script>
+var $=function(i){return document.getElementById(i)},cur="tf",pimg=null,KEYS=["top","hem","cf","cb","side","pocket"];
+function fmt(n){return +(+n).toFixed(2)+""}
+function ar(a,i){return Array.isArray(a)?a[i]:a}
+function mk(L,o){return L.map(function(l,i){var r={l:l,top:0,hem:0,cf:0,cb:0,side:0,pocket:0};
+r.pw=ar(o.pw,i);r.ph=ar(o.ph,i);r.gw=ar(o.gw,i);r.gl=ar(o.gl,i);r.hw=o.hw?ar(o.hw,i):0;
+for(var k in o.v)r[k]=ar(o.v[k],i);return r})}
+var TL=["5y-6y","6y-7y","7y-8y","8y-9y","9y-10y","10y-11y","11y-12y","12y-13y","13y-14y","14y-15y","15y-16y"],N="+1CM FOR SEAM ALLOWANCE",TGW=[39.5,41,42.5,44,45.53,47,48.5,50,51.5,53,54.5],TGL=[48.78,51.28,53.78,56.28,58.78,61.28,63.78,66.28,68.78,71.28,73.78];
+var HL=["5y-6y","6y-7y","7y-8y","8y-9y","9y-10y","10y-11y","11y-12y","12y-13y","13y-14y","14y-15y","15y-16y"],HGW=[41,42.02,42.98,44.42,46.33,48.09,49.69,51.45,53.52,55.5,57.5],HGL=[42.4,45.37,48.43,51.64,54.38,57.6,60.33,62.42,64.35,66.4,68.4],HM=[0,0,1,2,3,4,5,6,7,7,7],HS=[{"r":[[0,0.1525],[0.0076,0.156],[0.0608,0.156],[0.1141,0.1277],[0.1521,0.0887],[0.1825,0.0319],[0.1901,0.0035],[0.1977,0.0],[0.2548,0.0142],[0.2662,0.0213],[0.4943,0.0922],[0.4867,0.1383],[0.4677,0.2021],[0.4677,0.2376],[0.4601,0.2482],[0.4601,0.2837],[0.4525,0.305],[0.4525,0.3652],[0.4563,0.3759],[0.4525,0.3794],[0.4525,0.4043],[0.4601,0.4149],[0.4601,0.4255],[0.4677,0.4326],[0.4867,0.4362],[0.4981,0.4433],[0.4981,0.9929],[0.4905,0.9965],[0,0.9965]],"p":[[0,0.5638],[0.2167,0.5638],[0.2471,0.6915],[0.2738,0.7447],[0.289,0.7979],[0.3232,0.8511],[0.3232,0.9752],[0,0.9752]]},{"r":[[0,0.1462],[0.0335,0.1495],[0.0483,0.1429],[0.0669,0.1429],[0.119,0.1163],[0.1673,0.0565],[0.1859,0.0066],[0.1933,0.0033],[0.2305,0.01],[0.29,0.0299],[0.3197,0.0332],[0.342,0.0432],[0.3903,0.0532],[0.4126,0.0631],[0.4238,0.0631],[0.4349,0.0698],[0.4981,0.0864],[0.4721,0.1761],[0.4721,0.1993],[0.4647,0.2159],[0.4647,0.2458],[0.4572,0.2525],[0.4535,0.3522],[0.4572,0.3555],[0.4572,0.402],[0.4758,0.4219],[0.487,0.4219],[0.4981,0.4286],[0.4981,0.9934],[0.4907,0.9967],[0,0.9967]],"p":[[0,0.5914],[0.2119,0.5914],[0.2491,0.7243],[0.2788,0.7841],[0.2862,0.814],[0.316,0.8605],[0.316,0.9767],[0,0.9767]]},{"r":[[0,0.1464],[0.0054,0.1495],[0.0522,0.1495],[0.0665,0.1464],[0.1169,0.1184],[0.1529,0.081],[0.1853,0.0156],[0.1853,0.0062],[0.1924,0.0031],[0.2068,0.0031],[0.2176,0.0093],[0.25,0.0156],[0.3399,0.0436],[0.3507,0.0436],[0.4371,0.0717],[0.4766,0.0779],[0.4946,0.0872],[0.4838,0.1433],[0.4766,0.1558],[0.473,0.2056],[0.4586,0.2679],[0.455,0.3738],[0.4658,0.4019],[0.473,0.4081],[0.4874,0.4081],[0.4982,0.4143],[0.4982,0.9938],[0.491,0.9969],[0,0.9969]],"p":[[0,0.6168],[0.214,0.6168],[0.2428,0.7227],[0.2644,0.7788],[0.3147,0.866],[0.3147,0.9782],[0,0.9782]]},{"r":[[0,0.1391],[0.0259,0.142],[0.0362,0.1361],[0.0638,0.1361],[0.1224,0.1036],[0.1534,0.0651],[0.1776,0.0059],[0.1879,0.0],[0.2224,0.0118],[0.2328,0.0118],[0.2431,0.0178],[0.2569,0.0178],[0.2879,0.0296],[0.35,0.0414],[0.4983,0.0828],[0.4914,0.0976],[0.4914,0.1183],[0.4845,0.1243],[0.4845,0.145],[0.4776,0.1509],[0.4776,0.1716],[0.4707,0.1805],[0.4707,0.2219],[0.4603,0.2663],[0.4603,0.284],[0.4569,0.287],[0.4569,0.3284],[0.4603,0.3314],[0.4638,0.3846],[0.4776,0.3964],[0.4879,0.3964],[0.4983,0.4024],[0.4983,0.9941],[0.4914,0.997],[0,0.997]],"p":[[0,0.6361],[0.2052,0.6361],[0.2328,0.7396],[0.2466,0.7633],[0.2534,0.7929],[0.3017,0.8728],[0.3017,0.9793],[0,0.9793]]},{"r":[[0,0.1397],[0.0066,0.1425],[0.0532,0.1425],[0.1063,0.1145],[0.1362,0.0894],[0.1528,0.067],[0.1761,0.014],[0.1761,0.0056],[0.1827,0.0028],[0.206,0.0056],[0.2392,0.0168],[0.2591,0.0196],[0.2691,0.0251],[0.3654,0.0475],[0.3987,0.0587],[0.412,0.0587],[0.4219,0.0642],[0.4385,0.0642],[0.4585,0.0726],[0.4817,0.0754],[0.495,0.081],[0.4618,0.2263],[0.4585,0.2793],[0.4551,0.2821],[0.4585,0.3296],[0.4551,0.3324],[0.4551,0.3547],[0.4684,0.3827],[0.4784,0.3883],[0.495,0.3911],[0.4983,0.3966],[0.4983,0.9916],[0.4884,0.9972],[0,0.9972]],"p":[[0,0.6564],[0.2027,0.6564],[0.2226,0.7291],[0.2359,0.7542],[0.2425,0.7877],[0.2757,0.8547],[0.2957,0.8827],[0.2957,0.9777],[0,0.9777]]},{"r":[[0,0.1307],[0.0338,0.1333],[0.037,0.1307],[0.0595,0.1307],[0.0852,0.12],[0.1206,0.0987],[0.1463,0.072],[0.1624,0.0427],[0.1624,0.0347],[0.1688,0.0293],[0.1688,0.0213],[0.1752,0.016],[0.1752,0.0053],[0.1849,0.0],[0.291,0.024],[0.3135,0.032],[0.3232,0.032],[0.3424,0.04],[0.3521,0.04],[0.4936,0.0773],[0.4743,0.1467],[0.4743,0.1787],[0.4678,0.1867],[0.4678,0.2133],[0.4614,0.24],[0.4614,0.2667],[0.4582,0.2693],[0.4582,0.3387],[0.4711,0.3707],[0.4968,0.3813],[0.4968,0.9947],[0.4904,0.9973],[0,0.9973]],"p":[[0,0.6747],[0.1945,0.6747],[0.2106,0.728],[0.2106,0.744],[0.2235,0.768],[0.2299,0.7947],[0.2395,0.8053],[0.2653,0.8613],[0.2846,0.8907],[0.2878,0.984],[0,0.984]]},{"r":[[0,0.134],[0.0047,0.1366],[0.0326,0.1366],[0.0481,0.134],[0.0761,0.1237],[0.104,0.1082],[0.132,0.0851],[0.1568,0.0464],[0.1599,0.0335],[0.1755,0.0052],[0.1817,0.0026],[0.1941,0.0026],[0.2873,0.0258],[0.2997,0.0258],[0.309,0.0309],[0.3432,0.0361],[0.3525,0.0412],[0.3618,0.0412],[0.4953,0.0747],[0.486,0.1263],[0.4798,0.134],[0.4767,0.1598],[0.4736,0.1624],[0.4674,0.2294],[0.4612,0.2448],[0.4581,0.3428],[0.4705,0.3737],[0.4798,0.3789],[0.4953,0.3814],[0.4984,0.3866],[0.4984,0.982],[0.4953,0.9948],[0.4891,0.9974],[0,0.9974]],"p":[[0,0.683],[0.191,0.683],[0.2345,0.8222],[0.2655,0.8763],[0.278,0.8892],[0.2811,0.982],[0,0.982]]},{"r":[[0,0.1375],[0.003,0.14],[0.0328,0.14],[0.0418,0.135],[0.0597,0.135],[0.1045,0.11],[0.1284,0.0875],[0.1284,0.0825],[0.1373,0.075],[0.1612,0.025],[0.1642,0.005],[0.1701,0.0025],[0.194,0.005],[0.2776,0.0275],[0.2985,0.03],[0.3552,0.045],[0.3672,0.045],[0.3761,0.05],[0.391,0.05],[0.4119,0.0575],[0.4567,0.065],[0.4657,0.07],[0.4925,0.075],[0.4866,0.1125],[0.4806,0.1175],[0.4806,0.1425],[0.4746,0.1575],[0.4746,0.17],[0.4687,0.185],[0.4687,0.205],[0.4657,0.2075],[0.4657,0.24],[0.4627,0.2425],[0.4627,0.2675],[0.4597,0.27],[0.4597,0.295],[0.4567,0.2975],[0.4567,0.3125],[0.4627,0.315],[0.4627,0.32],[0.4567,0.3225],[0.4567,0.345],[0.4687,0.375],[0.4806,0.385],[0.4925,0.3875],[0.4925,0.69],[0.4985,0.7025],[0.4955,0.705],[0.4955,0.995],[0.4896,0.9975],[0,0.9975]],"p":[[0,0.6925],[0.1851,0.6925],[0.203,0.76],[0.2269,0.8225],[0.2657,0.89],[0.2657,0.98],[0,0.98]]}];
+var M={
+tf:{nv:{},dims:0,chk:{top:1,cf:1},pw:8.64,ph:3.09,per:0,notes:N,rows:mk(TL,{pw:8.64,ph:3.09,gw:TGW,gl:TGL,v:{top:[5,5,5,5.5,5.5,5.5,6,6,6,6,6],cf:[15,15,15,15.5,15.5,16,16,16.5,16.5,16.5,16.5]}})},
+tb:{nv:{},dims:0,chk:{top:1},pw:23.76,ph:24.95,per:0,notes:N,rows:mk(TL,{pw:23.76,ph:24.95,gw:TGW,gl:TGL,v:{top:5}})},
+hf:{nv:{},dims:0,chk:{top:1,cf:1},pw:8.64,ph:3.09,per:0,notes:N,rows:mk(HL,{pw:8.64,ph:3.09,gw:HGW,gl:HGL,v:{top:[5,5,5,5.5,5.5,5.5,6,6,6,6,6],cf:[15,15,15,15.5,15.5,16,16,16.5,16.5,16.5,16.5]}})},
+pt:{nv:{side:"1.5",pocket:"1.5"},dims:0,chk:{side:1,pocket:1},pw:7,ph:4.6,per:1,notes:N,rows:mk(["XS","S","M","L","XL","2XL","3XL"],{pw:[7,7,7,7,8.05,8.05,8.05],ph:[4.6,4.6,4.6,4.6,5.29,5.29,5.29],gw:[28,28.5,29.5,30.5,32,33,34.5],gl:[94,95,97,99,101,103,105],hw:[15,15.5,16,16.5,17,17.5,18],v:{side:1.5,pocket:1.5}})}};
+M.hf.rows.forEach(function(r,i){r.sh=HS[HM[i]]});
+var GEO={t:{px:4.2,per:3},p:{px:3.9,row:[[0,1,2,3],[4,5,6]]},h:{px:3.6,per:4}};
+function pack(V,per){var rows=[],n=V.length,rem=n%per,i=0;if(rem){rows.push(V.slice(0,rem));i=rem}for(;i<n;i+=per)rows.push(V.slice(i,i+per));return rows}
+function tsOf(){var st=M[cur];return st.ts||((cur=="tf"||cur=="hf")?"fn":cur=="tb"?"bn":"wb")}
+function nm(k){return k=="top"?{fn:"Front Neck",bn:"Back Neck",wb:"Waist"}[tsOf()]:{hem:"Hem",cf:"CF",cb:"CB",side:"Side Seam",pocket:"Below Pocket",gw:"Width",gl:"Length",hw:"Hem W"}[k]}
+function nn(k){return k=="top"?{fn:"FRONT NECK",bn:"BACK NECK",wb:"WAISTBAND"}[tsOf()]:{hem:"HEM",cf:"CENTER FRONT",cb:"CENTER BACK",side:"SIDE SEAM"}[k]}
+function vis(r){return r.l.trim()!==""}
+function buildTb(){var st=M[cur],K=KEYS.filter(function(k){return st.chk[k]});
+if(st.per)K=K.concat(["pw","ph"]);if(st.dims)K=K.concat(["gw","gl"],cur=="pt"?["hw"]:[]);
+var h="<tr><th>المقاس</th>";K.forEach(function(k){h+="<th>"+(k=="pw"?"W":k=="ph"?"H":nm(k))+"</th>"});h+="</tr>";
+st.rows.forEach(function(r,i){h+='<tr'+(vis(r)?'':' class="off"')+'><td><input type="text" data-i="'+i+'" data-k="l" value="'+r.l+'"></td>';
+K.forEach(function(k){h+='<td><input type="number" step="0.01" data-i="'+i+'" data-k="'+k+'" value="'+r[k]+'"></td>'});h+="</tr>"});
+$("tb").innerHTML=h;buildNv()}
+function buildNv(){var st=M[cur],h="";KEYS.forEach(function(k){if(st.chk[k])h+='<div style="display:flex;gap:6px;align-items:center;margin-bottom:4px"><span style="font-size:12px;min-width:100px;color:var(--mut)">'+nm(k)+'</span><input type="number" step="0.01" data-nv="'+k+'" value="'+(st.nv[k]||"")+'" placeholder="CM"></div>'});$("nvbox").innerHTML=h}
+function loadUI(){var st=M[cur];$("pw").value=st.pw;$("ph").value=st.ph;$("notes").value=st.notes;$("per").checked=!!st.per;$("dims").checked=!!st.dims;
+KEYS.forEach(function(k){$("ck-"+k).checked=!!st.chk[k];$("ai-"+k).checked=k=="top"?false:!!st.chk[k]});var ts=tsOf(),tp=!!st.chk.top;$("ai-top").checked=tp&&ts=="fn";$("ai-bn").checked=tp&&ts=="bn";$("ai-wb").checked=tp&&ts=="wb";$("ck-top").checked=tp&&ts=="fn";$("ck-bn").checked=tp&&ts=="bn";$("ck-wb").checked=tp&&ts=="wb";buildTb()}
+function aiLabels(){var T=cur=="tb"?"PRINT PLACEMENT-FROM BACK NECK":cur=="pt"?"PRINT PLACEMENT-FROM WAISTBAND":"PRINT PLACEMENT-FROM FRONT NECK",
+N2={top:T,pocket:"PRINT PLACEMENT-BELOW POCKET",cf:"PRINT PLACEMENT-FROM CENTER FRONT",cb:"PRINT PLACEMENT-FROM CENTER BACK",side:"PRINT PLACEMENT-FROM SIDE SEAM",hem:"PRINT PLACEMENT-FROM HEM"};
+}
+$("tb").addEventListener("input",function(e){var d=e.target.dataset;if(!d.k)return;var r=M[cur].rows[d.i];
+if(d.k=="l"){r.l=e.target.value;var tr=e.target.closest&&e.target.closest("tr");if(tr)tr.classList.toggle("off",!vis(r))}else{r[d.k]=parseFloat(e.target.value)||0;
+if(pimg&&$("lock").checked&&(d.k=="pw"||d.k=="ph")){var q=pimg.height/pimg.width,o=d.k=="pw"?"ph":"pw";
+r[o]=Math.round((d.k=="pw"?r.pw*q:r.ph/q)*100)/100;var s=$("tb").querySelector('input[data-i="'+d.i+'"][data-k="'+o+'"]');if(s)s.value=r[o]}}
+render()});
+$("nvbox").addEventListener("input",function(e){var k=e.target.dataset.nv;if(k){M[cur].nv[k]=e.target.value;render()}});
+["pw","ph"].forEach(function(i){$(i).addEventListener("input",function(){var st=M[cur];st[i]=parseFloat($(i).value)||0;
+if(pimg&&$("lock").checked){var q=pimg.height/pimg.width;if(i=="pw"){st.ph=Math.round(st.pw*q*100)/100;$("ph").value=st.ph}else{st.pw=Math.round(st.ph/q*100)/100;$("pw").value=st.pw}}render()})});
+$("notes").addEventListener("input",function(){M[cur].notes=$("notes").value;render()});
+["style","lp"].forEach(function(i){$(i).addEventListener("input",render)});
+$("per").addEventListener("change",function(){M[cur].per=$("per").checked?1:0;buildTb();render()});
+$("dims").addEventListener("change",function(){M[cur].dims=$("dims").checked?1:0;buildTb();render()});
+KEYS.forEach(function(k){if(k=="top")return;$("ck-"+k).addEventListener("change",function(){M[cur].chk[k]=$("ck-"+k).checked?1:0;buildTb();render()})});
+[["top","fn"],["bn","bn"],["wb","wb"]].forEach(function(a){$("ck-"+a[0]).addEventListener("change",function(){var st=M[cur];
+if(this.checked){st.ts=a[1];st.chk.top=1;["top","bn","wb"].forEach(function(i){if(i!=a[0])$("ck-"+i).checked=false})}else if(tsOf()==a[1])st.chk.top=0;buildTb();render()})});
+var autoLp=0;
+function setMode(v){cur=v;$("mode").value=v;if(cur=="hf"&&$("lp").value=="bc"){$("lp").value="mc";autoLp=1}else if(cur!="hf"&&autoLp&&$("lp").value=="mc"){$("lp").value="bc";autoLp=0}loadUI();render()}
+$("mode").addEventListener("change",function(){setMode(this.value)});
+$("img").addEventListener("change",function(e){var f=e.target.files[0];if(!f)return;var fr=new FileReader();
+fr.onload=function(){var im=new Image();im.onload=function(){pimg=im;if($("lock").checked){var st=M[cur],q=im.height/im.width;
+st.ph=Math.round(st.pw*q*100)/100;st.rows.forEach(function(r){r.ph=Math.round(r.pw*q*100)/100});loadUI()}render()};im.src=fr.result};fr.readAsDataURL(f)});
+function layout(){var st=M[cur],g=GEO[cur=="pt"?"p":cur=="hf"?"h":"t"],px=g.px,CX=[],TOP=[],y=22;
+var V=[];st.rows.forEach(function(q,i){if(vis(q))V.push(i)});
+var RR=cur=="pt"?g.row.map(function(r){return r.filter(function(i){return vis(st.rows[i])})}).filter(function(r){return r.length}):pack(V,g.per),aw=0;
+RR.forEach(function(r){var tot=30*(r.length-1);r.forEach(function(i){tot+=st.rows[i].gw*px});aw=Math.max(aw,tot+50)});
+RR.forEach(function(r){
+var mh=0,tot=30*(r.length-1);r.forEach(function(i){mh=Math.max(mh,st.rows[i].gl*px);tot+=st.rows[i].gw*px});var x=(aw-tot)/2;
+r.forEach(function(i){var q=st.rows[i];CX[i]=x+q.gw*px/2;x+=q.gw*px+30;TOP[i]=y+mh-q.gl*px});y+=mh+34});
+return{px:px,CX:CX,TOP:TOP,aw:Math.max(aw,300),h:y-4}}
+function tpath(c,cx,t,w,h,px){var hw=w/2,nw=8.8*px,nd=(cur=="tb"?3:7.2)*px,sl=3.3*px,ah=17*px,ind=3*px;
+c.beginPath();c.moveTo(cx-hw,t+h);c.lineTo(cx-hw,t+sl+ah);c.quadraticCurveTo(cx-hw+ind,t+sl+ah*0.55,cx-hw,t+sl);c.lineTo(cx-nw,t);
+c.bezierCurveTo(cx-nw,t+nd*1.3,cx+nw,t+nd*1.3,cx+nw,t);c.lineTo(cx+hw,t+sl);
+c.quadraticCurveTo(cx+hw-ind,t+sl+ah*0.55,cx+hw,t+sl+ah);c.lineTo(cx+hw,t+h);c.closePath()}
+function hpath(c,cx,t,W,H,R){c.beginPath();R.forEach(function(p,i){var X=cx+p[0]*W,Y=t+p[1]*H;if(i)c.lineTo(X,Y);else c.moveTo(X,Y)});for(var i=R.length-2;i>0;i--)c.lineTo(cx-R[i][0]*W,t+R[i][1]*H);c.closePath()}
+function ppath(c,cx,t,w,h,hw,px){var L=cx-w/2,R=cx+w/2,s=1.3*px;c.beginPath();c.moveTo(L,t);c.lineTo(R,t);c.lineTo(R-s,t+h);c.lineTo(R-s-hw,t+h);
+c.lineTo(L+3,t+.28*h);c.bezierCurveTo(L+24,t+.25*h,L+24,t+.14*h,L+2,t+.12*h);c.closePath()}
+function draw(cv,s){
+var st=M[cur],ly=layout(),px=ly.px,pt=cur=="pt",ck=st.chk,vrows=[],L=notesLines(),bh=L.length*23+26,BX=ly.aw+20,CW=BX+430,CH=Math.max(ly.h,50+bh+30);
+cv.width=CW*s;cv.height=CH*s;var c=cv.getContext("2d");c.direction="ltr";c.scale(s,s);
+c.fillStyle="#ebebeb";c.fillRect(0,0,CW,CH);
+var cfv=!ck.pocket&&!ck.top&&(ck.cf||ck.cb),cfk=ck.cf?"cf":"cb";
+var vk=ck.pocket?"pocket":ck.top?"top":cfv?cfk:ck.hem?"hem":null;
+var hk=ck.side?"side":(!cfv&&(ck.cf||ck.cb))?cfk:null;
+st.rows.forEach(function(r,i){if(!vis(r))return;vrows.push(r);
+var cx=ly.CX[i],t=ly.TOP[i],W=r.gw*px,H=r.gl*px,hwp=r.hw*px;
+if(pt)ppath(c,cx,t,W,H,hwp,px);else if(cur=="hf")hpath(c,cx,t,W,H,r.sh.r);else tpath(c,cx,t,W,H,px);
+c.lineJoin="round";c.fillStyle="#ebebeb";c.fill();
+c.strokeStyle="#000";c.lineWidth=1.6;c.stroke();
+if(cur=="hf"){hpath(c,cx,t,W,H,r.sh.p);c.strokeStyle="#7c3aed";c.lineWidth=1.4;c.stroke()}
+var R=cx+W/2,pk=pt?t+.17*H:t+.2*H,sl=1.3*px;
+if(pt){c.strokeStyle="#888";c.lineWidth=1.2;c.beginPath();c.moveTo(R-24,t+.04*H);c.lineTo(R-20,pk);c.stroke()}
+var pw=st.per?r.pw:st.pw,ph=st.per?r.ph:st.ph,w=pw*px,h=ph*px,fneck=cur=="hf"?t+r.sh.r[0][1]*H:t+7.2*px*.975,bneck=t+3*px*.975,neck=cur=="tb"?bneck:fneck;
+var y=vk=="pocket"?pk+r.pocket*px:vk=="top"?(tsOf()=="fn"?fneck:tsOf()=="bn"?bneck:t)+r.top*px:(vk=="cf"||vk=="cb")?neck+r[vk]*px:vk=="hem"?t+H-r.hem*px-h:t+(H-h)/2;
+var re=pt?R-sl*(y-t)/H:R,x=hk=="side"?re-r.side*px-w:hk?cx+r[hk]*px-w/2:cx-w/2;
+c.fillStyle="#fff";c.fillRect(x,y,w,h);
+if(pimg)c.drawImage(pimg,x,y,w,h);else{c.fillStyle="#999";c.font="9px Arial";c.textAlign="center";c.fillText("PRINT",x+w/2,y+h/2+3)}
+c.fillStyle="#000";c.font="bold 14px Arial";c.textAlign="center";
+if(hk)c.fillText(fmt(r[hk])+" CM",x+w/2,y-6);
+if(vk){var tx=fmt(r[vk])+" CM";if(vk=="hem")c.fillText(tx,x+w/2,y+h+16);else if(hk){c.textAlign="right";c.fillText(tx,x-5,y+14)}else c.fillText(tx,x+w/2,y-6)}
+var lp=$("lp").value,hwd=W/2,al=lp[1]=="r"?"right":lp[1]=="l"?"left":"center",lx,ly2;
+if(lp=="mc"){lx=cx;ly2=t+H*.5;al="center"}else{
+var rx=pt?R-13:cx+hwd-8,lft=pt?R-sl-hwp+8:cx-hwd+8;
+lx=lp[1]=="c"?cx:lp[1]=="r"?rx:lft;ly2=lp[0]=="t"?(pt?t+.33*H:t+14*px):t+H-8}
+c.fillStyle="#000";c.font="bold 19px Arial";c.textAlign=al;c.fillText(r.l,lx,ly2)});
+c.strokeStyle="#333";c.lineWidth=1.2;c.strokeRect(BX,50,400,bh);
+c.fillStyle="#000";c.font="18px Arial";c.textAlign="left";
+L.forEach(function(l,k){c.fillText(l,BX+20,80+k*23,370)})}
+function notesLines(){var st=M[cur],ck=st.chk,vrows=st.rows.filter(vis);var L=["STYLE : "+$("style").value,""];
+["top","pocket","cf","cb","side","hem"].forEach(function(k){if(!ck[k])return;
+var nv=parseFloat(st.nv[k]),sv=nv>0?" "+fmt(nv)+" CM":"";
+L.push((k=="pocket"?"PRINT PLACEMENT-BELOW POCKET":"PRINT PLACEMENT-FROM "+nn(k))+sv)});
+L.push("");st.notes.split("\n").forEach(function(l){L.push(l)});L.push("","PRINT SIZE","");
+if(st.per){var gs={},od=[];vrows.forEach(function(r){var k=fmt(r.pw)+"|"+fmt(r.ph);if(!gs[k]){gs[k]=[];od.push(k)}gs[k].push(r.l)});
+od.forEach(function(k){var p=k.split("|");L.push(gs[k].join(" / "),"WIDTH "+p[0]+" CM","HEIGHT "+p[1]+" CM","")})}
+else L.push("WIDTH "+fmt(st.pw)+" CM","HEIGHT "+fmt(st.ph)+" CM");
+return L}
+function render(){draw($("cv"),2)}
+function note(t){var n=$("dlnote");if(n)n.textContent=t||""}
+$("dl").onclick=function(){var o=document.createElement("canvas");draw(o,4);
+var nm0=($("style").value||"STYLE").replace(/[\\\/:*?"<>|]+/g,"-").trim()||"STYLE";var fn=nm0+"-"+{tf:"FRONT",tb:"BACK",hf:"FRONT-HOODY",pt:"PANTS"}[cur]+".png";
+note("");o.toBlob(function(b){if(!b){note("حصلت مشكلة في تجهيز الصورة.");return}
+var u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();
+setTimeout(function(){URL.revokeObjectURL(u)},1500);note("تم التحميل.")},"image/png")};
+
+var SM=null,AIB=false,IMAX=4;
+function anote(t){$("ainote").textContent=t}
+function nz(v){var n=parseFloat(v);return isFinite(n)&&n>=0?n:null}
+function nl(s){return String(s==null?"":s).replace(/[\u2013\u2014]/g,"-").replace(/\s+/g,"").toUpperCase().replace(/(\d)(YRS?|YEARS?|Y)/g,"$1")}
+$("shot").accept="application/pdf,.pdf";$("aibox").hidden=false;
+var PDFDOC=null,TOPSRC=null;
+function aiTop(){var m=tsOf(),o={fn:$("ai-top").checked,bn:$("ai-bn").checked,wb:$("ai-wb").checked};if(o[m])return m;return o.fn?"fn":o.bn?"bn":o.wb?"wb":null}
+function pdfOf(fs){var r=null;Array.prototype.forEach.call(fs||[],function(f){if(f.type=="application/pdf"||/\.pdf$/i.test(f.name))r=f});return r}
+function loadPdfLib(){return new Promise(function(res,rej){if(window.pdfjsLib)return res(window.pdfjsLib);var s=document.createElement("script");
+s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+s.onload=function(){if(!window.pdfjsLib)return rej(new Error("x"));window.pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";res(window.pdfjsLib)};
+s.onerror=function(){rej(new Error("x"))};document.head.appendChild(s)})}
+function findPages(doc){var n=Math.min(doc.numPages,80),hits=[],alt=[],p=Promise.resolve();
+for(var i=1;i<=n;i++)(function(i){p=p.then(function(){return doc.getPage(i).then(function(pg){return pg.getTextContent()}).then(function(tc){
+var t=tc.items.map(function(x){return x.str}).join(" ");if(/PRINT\s*PLACEMENT/i.test(t))hits.push(i);else if(/E39|E40/.test(t))alt.push(i)})})})(i);
+return p.then(function(){return hits.length?hits:alt})}
+function parsePages(s){var o=[];String(s||"").split(/[,\s]+/).forEach(function(t){var m=t.match(/^(\d+)(?:-(\d+))?$/);if(m){var a=+m[1],b=m[2]?+m[2]:a;for(var i=a;i<=b&&o.length<40;i++)o.push(i)}});return o}
+$("shot").addEventListener("change",function(){PDFDOC=null;$("pdfbox").hidden=true;var f=pdfOf($("shot").files);if(!f)return;
+$("pdfbox").hidden=false;$("pg").value="";$("pgnote").textContent="بقرا الـ PDF...";
+loadPdfLib().then(function(L){return f.arrayBuffer().then(function(b){return L.getDocument({data:b}).promise})}).then(function(doc){PDFDOC=doc;
+return findPages(doc).then(function(p){p=p.slice(0,IMAX);if(p.length){$("pg").value=p.join(",");$("pgnote").textContent="لقيت صفحة الطباعة في: "+p.join(", ")+" (من "+doc.numPages+" صفحة). عدّل الأرقام لو غلط."}
+else{$("pg").value="1";$("pgnote").textContent="مالقيتش نص بيدل على صفحة الطباعة (يمكن الـ PDF مصوّر). اكتب رقم الصفحة بنفسك."}})})
+.catch(function(){PDFDOC=null;$("pgnote").textContent="مقدرتش أفتح الـ PDF هنا. املا الجدول بإيدك."})});
+function getImgs(fs){var arr=Array.prototype.slice.call(fs),pdf=pdfOf(fs),imgs=arr.filter(function(f){return f!==pdf});
+if(!pdf)return Promise.resolve(imgs);
+if(!PDFDOC)return Promise.reject({code:"pdf_failed"});
+var pages=parsePages($("pg").value).filter(function(n){return n>=1&&n<=PDFDOC.numPages}).slice(0,Math.max(1,IMAX-imgs.length));
+if(!pages.length)return Promise.reject({code:"no_pages"});
+var out=[],p=Promise.resolve();
+pages.forEach(function(n){p=p.then(function(){return PDFDOC.getPage(n).then(function(pg){var v0=pg.getViewport({scale:1}),sc=Math.min(3,1800/v0.width),v=pg.getViewport({scale:sc}),cv=document.createElement("canvas");
+cv.width=v.width;cv.height=v.height;var cx=cv.getContext("2d");cx.fillStyle="#fff";cx.fillRect(0,0,cv.width,cv.height);
+return pg.render({canvasContext:cx,viewport:v}).promise.then(function(){return new Promise(function(res){cv.toBlob(res,"image/jpeg",0.9)})})}).then(function(b){out.push(b)})})});
+return p.then(function(){return imgs.concat(out)},function(){return Promise.reject({code:"pdf_failed"})})}
+function aiErr(e){var c=e&&e.code;return c=="not_granted"?"لازم توافق على استخدام Claude من الصفحة عشان القراءة تشتغل.":c=="rate_limited"?"الاستخدام وصل للحد دلوقتي، جرب بعد شوية.":c=="image_rejected"?"الصورة مش مقبولة. استخدم PNG أو JPG أصغر من 20 ميجا.":c=="invalid_json"?"مقدرتش أقرا الأرقام من الصورة. جرب سكرين أوضح ومقصوص على جدول الطباعة.":c=="refused"?"الصورة دي مقدرتش أقراها. جرب صورة تانية.":c=="pdf_failed"?"مقدرتش أفتح الـ PDF هنا. املا الجدول بإيدك.":c=="no_pages"?"اكتب رقم صفحة الطباعة في الـ PDF الأول.":c=="session_expired"?"سجل دخول تاني على claude.ai وجرب.":c=="images_unavailable"||c=="sampling_disabled"||c=="capability_disabled"?"القراءة شغالة مع ملفات PDF بس.":"حصلت مشكلة أثناء القراءة. جرب تاني."}
+function parseSheet(items,res,sel){
+var it=[];items.forEach(function(x){var s=String(x.str||"").trim();if(s&&x.transform)it.push({s:s,x:x.transform[4],y:x.transform[5],c:x.transform[4]+(x.width||0)/2})});
+it.forEach(function(o){var m=o.s.match(/^\d{5,}-(.+)-[A-Z0-9]{5,8}$/);if(m&&!res.style)res.style=m[1]});
+var hs=it.filter(function(o){return /^\d{1,2}y-?(\d{1,2}y)?$/i.test(o.s)}).sort(function(a,b){return a.c-b.c}),cl=[];
+hs.forEach(function(o){var l=cl[cl.length-1];if(l&&o.c-l.c<14)l.m.push(o);else cl.push({c:o.c,m:[o]})});
+cl.forEach(function(g){g.m.sort(function(a,b){return b.y-a.y});g.label=g.m.map(function(o){return o.s}).join("").replace(/\s/g,"")});
+if(cl.length>=2)res.cl=cl;cl=res.cl;if(!cl||cl.length<2)return;
+var ds=[];for(var i=1;i<cl.length;i++)ds.push(cl[i].c-cl[i-1].c);ds.sort(function(a,b){return a-b});var sp=ds[Math.floor(ds.length/2)],tol=sp*0.45,minC=cl[0].c-sp*0.5;
+var cd=it.filter(function(o){return /^[A-Z]\d{2,3}$/.test(o.s)});if(!cd.length)return;
+var mx=Math.min.apply(null,cd.map(function(o){return o.x}));cd=cd.filter(function(o){return o.x-mx<25}).sort(function(a,b){return b.y-a.y});
+var rows=cd.map(function(c,j){var top=c.y+6,bot=j+1<cd.length?cd[j+1].y+6:-1e9,nm=[],vals={};
+it.filter(function(o){return o.y<=top&&o.y>bot&&o!==c}).forEach(function(o){
+if(/^-?\d+(\.\d+)?$/.test(o.s)){var bi=-1,bd=1e9;cl.forEach(function(g,k){var d=Math.abs(o.c-g.c);if(d<bd){bd=d;bi=k}});if(bd<=tol)vals[bi]=parseFloat(o.s)}
+else if(o.c<minC)nm.push(o)});
+nm.sort(function(a,b){return Math.abs(a.y-b.y)>3?b.y-a.y:a.x-b.x});
+return{code:c.s,text:nm.map(function(o){return o.s}).join(" "),vals:vals}});
+var front=cur=="tf"||cur=="hf",PP="PRINT\\s*PLACEMENT.*";
+var RE={top:TOPSRC=="fn"?new RegExp(PP+"FRONT\\s*NECK","i"):TOPSRC=="bn"?new RegExp(PP+"BACK\\s*NECK","i"):new RegExp(PP+"WAIST","i"),
+pocket:new RegExp(PP+"POCKET","i"),cf:new RegExp(PP+"CENTER\\s*FRONT","i"),cb:new RegExp(PP+"CENTER\\s*BACK","i"),side:new RegExp(PP+"SIDE\\s*SEAM","i"),hem:new RegExp(PP+"HEM","i")};
+function find(f){var r=null;rows.forEach(function(x){if(!r&&f(x))r=x});return r}
+var R={};sel.forEach(function(k){R[k]=find(function(x){return RE[k].test(x.text)||(k=="top"&&((TOPSRC=="fn"&&x.code=="E39")||(TOPSRC=="bn"&&x.code=="E40")))})});
+var bk=cur=="tb",gsrc=TOPSRC||(front?"fn":bk?"bn":null),AF=new RegExp(PP+"FRONT\\s*NECK","i"),AB=new RegExp(PP+"BACK\\s*NECK","i"),aReg=gsrc=="fn"?AF:gsrc=="bn"?AB:(sel.length?RE[sel[0]]:null),ai=-1;
+rows.forEach(function(x,i){if(ai<0&&aReg&&aReg.test(x.text))ai=i});
+if(ai>0){for(var q=ai-1;q>=0&&q>=ai-4;q--){var tx=rows[q].text;if(/^PRINT\s*WIDTH/i.test(tx)&&!R.w)R.w=rows[q];else if(/^PRINT\s*(LENGTH|HEIGHT)/i.test(tx)&&!R.h)R.h=rows[q];else break}}
+else{R.w=find(function(x){return /^PRINT\s*WIDTH/i.test(x.text)&&(bk?/BACK/i.test(x.text):!/BACK/i.test(x.text))});
+R.h=find(function(x){return /^PRINT\s*(LENGTH|HEIGHT)/i.test(x.text)&&(bk?/BACK/i.test(x.text):!/BACK/i.test(x.text))})}
+cl.forEach(function(g,i){var e=res.sizes[g.label];if(!e){e=res.sizes[g.label]={label:g.label};res.order.push(g.label)}
+Object.keys(R).forEach(function(k){if(R[k]&&R[k].vals[i]!=null)e[k]=R[k].vals[i]})})}
+
+function localPdf(sel){if(!PDFDOC){anote(aiErr({code:"pdf_failed"}));return}
+var pages=parsePages($("pg").value).filter(function(n){return n>=1&&n<=PDFDOC.numPages});
+if(!pages.length){anote(aiErr({code:"no_pages"}));return}
+$("ai").disabled=true;anote("بقرا الـ PDF في المتصفح...");
+var res={style:null,sizes:{},order:[],cl:null},txt=false,p=Promise.resolve();
+pages.forEach(function(n){p=p.then(function(){return PDFDOC.getPage(n).then(function(pg){return pg.getTextContent()}).then(function(tc){if(tc.items.length)txt=true;parseSheet(tc.items,res,sel)})})});
+p.then(function(){if(!txt||!res.order.length){anote("مقدرتش أقرا جدول من الـ PDF ده (يمكن مصوّر أو شكله مختلف). املا الجدول بإيدك،");return}
+applyAI({style:res.style,print:null,sizes:res.order.map(function(l){return res.sizes[l]})},sel)})
+.catch(function(){anote("حصلت مشكلة وأنا بقرا الـ PDF. جرب صفحة تانية أو املا الجدول بإيدك.")}).then(function(){$("ai").disabled=false})}
+function applyAI(d,K){
+if(!d||typeof d!="object"){anote("الرد مكنش بالشكل المتوقع. جرب تاني.");return}
+var st=M[cur],got=0,miss=[],rows=Array.isArray(d.sizes)?d.sizes:[],diff={};
+if(K.indexOf("top")>=0&&TOPSRC)st.ts=TOPSRC;
+if(typeof d.style=="string"&&d.style.trim())$("style").value=d.style.trim();
+var pw=d.print?nz(d.print.w):null,ph=d.print?nz(d.print.h):null;
+if(pw>0&&ph>0){st.pw=pw;st.ph=ph;st.rows.forEach(function(r){r.pw=pw;r.ph=ph})}
+rows.forEach(function(x){var r=null;st.rows.forEach(function(q){if(nl(q.l)==nl(x&&x.label))r=q});
+if(!r){miss.push(String(x&&x.label))
+;return}
+got++;K.forEach(function(k){var v=nz(x[k]);if(v!==null){r[k]=v;st.chk[k]=1}});
+var w=nz(x.w),h=nz(x.h);if(w>0&&h>0){r.pw=w;r.ph=h;diff[w+"|"+h]=1}});
+if(Object.keys(diff).length>1)st.per=1;
+else if(Object.keys(diff).length==1&&!(pw>0&&ph>0)){var q=Object.keys(diff)[0].split("|");st.pw=+q[0];st.ph=+q[1]}
+loadUI();render();
+anote(got?("اتملا "+got+" مقاس. راجع الأرقام في الجدول قبل التحميل."+(miss.length?" المقاسات دي مش موجودة في الجدول: "+miss.join(", ")+". عدل أسماء المقاسات في الجدول لو محتاج.":"")):"مقدرتش ألاقي مقاسات من الصورة تطابق الجدول."+(miss.length?" المقاسات اللي قريتها: "+miss.join(", ")+".":""))}
+$("ai").onclick=function(){
+var fs=$("shot").files;if(!fs||!fs.length){anote("اختار ملف PDF الأول.");return}
+var ORD=["top","pocket","cf","cb","side","hem"],topSrc=aiTop(),sel=ORD.filter(function(k){return k=="top"?!!topSrc:$("ai-"+k).checked});
+if(!sel.length){anote("اختار قياس واحد على الأقل من اللي هتاخده من الورقة.");return}
+if(pdfOf(fs)){TOPSRC=topSrc;localPdf(sel);return}
+TOPSRC=topSrc;if(!SM){anote("القراءة شغالة مع ملفات PDF بس.");return}
+var front=cur=="tf"||cur=="hf",pd={tf:"T-shirt FRONT",tb:"T-shirt BACK",hf:"Hoodie FRONT",pt:"Pants"}[cur];
+var NM={top:{fn:"PRINT PLACEMENT-FROM FRONT NECK (HPS)",bn:"PRINT PLACEMENT-FROM BACK NECK",wb:"PRINT PLACEMENT-FROM WAISTBAND"}[topSrc]||"",pocket:"PRINT PLACEMENT-BELOW POCKET",cf:"PRINT PLACEMENT-FROM CENTER FRONT",cb:"PRINT PLACEMENT-FROM CENTER BACK",side:"PRINT PLACEMENT-FROM SIDE SEAM",hem:"PRINT PLACEMENT-FROM HEM"};
+var code=front?"The sheet marks FRONT print placement rows with code E39 and BACK rows with code E40. This job is the FRONT, so use only rows with code E39 or named FRONT, and ignore every E40 or BACK row.\n":cur=="tb"?"The sheet marks FRONT print placement rows with code E39 and BACK rows with code E40. This job is the BACK, so use only rows with code E40 or named BACK, and ignore every E39 or FRONT row.\n":"";
+var tcode=topSrc=="fn"?"For the top value use only the row coded E39 (FRONT NECK). ":topSrc=="bn"?"For the top value use only the row coded E40 (BACK NECK). ":"";
+code=(topSrc&&topSrc!=(front?"fn":cur=="tb"?"bn":"wb"))?tcode:code+tcode;
+var wsrc=topSrc=="fn"||(!topSrc&&front)?"FRONT NECK (code E39)":topSrc=="bn"||(!topSrc&&cur=="tb")?"BACK NECK (code E40)":"";
+var wg="w and h are the PRINT WIDTH and PRINT LENGTH (height) values for that size. They come as a pair of rows sitting directly ABOVE a print placement row, and each pair belongs to the placement row right under it. "+(wsrc?"Take only the pair directly above the row named PRINT PLACEMENT-FROM "+wsrc+" and never mix it with the other pair. The BACK pair may also say BACK in the POM Detail column while the FRONT pair leaves it empty, but rely on the position above the placement row first. ":"Take the pair directly above the first print placement row listed below. ")+"Use null if there is no such pair.";
+var keys=sel.map(function(k){return '"'+k+'": number|null'}).join(", ");
+var list=sel.map(function(k){return '"'+k+'" = '+NM[k]}).join("; ");
+var P="You are reading a garment technical sheet page about print placement. The attached image(s) are screenshots of it. This job is for: "+pd+".\n"+code+
+"Extract the data and reply with ONLY one JSON object and nothing else, in this shape:\n"+
+'{"style": string|null, "print": {"w": number, "h": number}|null, "sizes": [{"label": string, '+keys+', "w": number|null, "h": number|null}]}\n'+
+'Rules: style is the style or article name or number. print is the print width and height in cm when one size applies to every size, otherwise null. sizes has one entry per size row, with label copied exactly as written (for example "7y-8y"). Return ONLY these measurements, matched by the exact row names on the sheet, and ignore every other measurement row: '+list+'. '+wg+' All numbers are plain numbers in cm. Use null for anything that is not on the sheet or is unreadable. Never guess or invent a number; copy numbers exactly as printed.';
+$("ai").disabled=true;anote("بقرا الصورة... ممكن ياخد لحد دقيقة.");
+getImgs(fs).then(function(imgs){return SM.json(P,{images:imgs,modelTier:"default"})}).then(function(d){applyAI(d,sel)}).catch(function(e){anote(aiErr(e))}).then(function(){$("ai").disabled=false})};
+loadUI();render();
+</script>
+</body></html>
