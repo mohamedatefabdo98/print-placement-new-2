@@ -201,11 +201,17 @@ else L.push("WIDTH "+fmt(st.pw)+" CM","HEIGHT "+fmt(st.ph)+" CM");
 return L}
 function render(){draw($("cv"),2)}
 function note(t){var n=$("dlnote");if(n)n.textContent=t||""}
-$("dl").onclick=function(){var o=document.createElement("canvas");draw(o,4);
-var nm0=($("style").value||"STYLE").replace(/[\\\/:*?"<>|]+/g,"-").trim()||"STYLE";var fn=nm0+"-"+{tf:"FRONT",tb:"BACK",hf:"FRONT-HOODY",pt:"PANTS"}[cur]+".png";
-note("");o.toBlob(function(b){if(!b){note("حصلت مشكلة في تجهيز الصورة.");return}
-var u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();
-setTimeout(function(){URL.revokeObjectURL(u)},1500);note("تم التحميل.")},"image/png")};
+function dlFallback(b,fn){var u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();
+setTimeout(function(){URL.revokeObjectURL(u)},1500);note("المتصفح ده مش بيدعم اختيار مكان الحفظ، فاتحمّلت في فولدر التحميلات. تقدر تفعّل \"اسأل أين تحفظ كل ملف\" من إعدادات التحميل في المتصفح.")}
+function dlBlob(fn){return new Promise(function(res,rej){var o=document.createElement("canvas");draw(o,4);o.toBlob(function(b){b?res(b):rej(new Error("blob"))},"image/png")})}
+$("dl").onclick=function(){
+var nm0=($("style").value||"STYLE").replace(/[\\\/:*?"<>|]+/g,"-").trim()||"STYLE",fn=nm0+"-"+{tf:"FRONT",tb:"BACK",hf:"FRONT-HOODY",pt:"PANTS"}[cur]+".png";
+note("");
+if(window.showSaveFilePicker){
+window.showSaveFilePicker({suggestedName:fn,types:[{description:"PNG",accept:{"image/png":[".png"]}}]}).then(function(h){
+return dlBlob(fn).then(function(b){return h.createWritable().then(function(w){return w.write(b).then(function(){return w.close()})})}).then(function(){note("تم الحفظ.")})})
+.catch(function(e){note(e&&e.name=="AbortError"?"اتلغى الحفظ.":"مقدرتش أحفظ الصورة.")});
+}else{dlBlob(fn).then(function(b){dlFallback(b,fn)}).catch(function(){note("حصلت مشكلة في تجهيز الصورة.")})}};
 
 var SM=null,AIB=false,IMAX=4;
 function anote(t){$("ainote").textContent=t}
